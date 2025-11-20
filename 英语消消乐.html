@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语消消乐 - 一年级版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', '圆体', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .screen {
+            width: 100%;
+            max-width: 500px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            text-align: center;
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        /* 主菜单样式 */
+        .main-title {
+            color: #ff6b6b;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0 #ffd166;
+        }
+        
+        .subtitle {
+            color: #118ab2;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        
+        .welcome-emoji {
+            font-size: 4rem;
+            margin: 20px 0;
+        }
+        
+        /* 关卡选择样式 */
+        .level-title {
+            color: #ff6b6b;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        
+        .levels-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .level-card {
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            text-align: left;
+        }
+        
+        .level-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            border-color: #ffd166;
+        }
+        
+        .level-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .level-name {
+            font-size: 1.5rem;
+            color: #073b4c;
+            font-weight: bold;
+        }
+        
+        .level-difficulty {
+            background-color: #06d6a0;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .level-difficulty.medium {
+            background-color: #ffd166;
+        }
+        
+        .level-difficulty.hard {
+            background-color: #ef476f;
+        }
+        
+        .level-description {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        /* 游戏界面样式 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px dashed #f0f0f0;
+        }
+        
+        .game-title {
+            color: #ff6b6b;
+            font-size: 1.8rem;
+            text-shadow: 2px 2px 0 #ffd166;
+        }
+        
+        .score-container {
+            background-color: #06d6a0;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 0 #04a37c;
+        }
+        
+        .timer-container {
+            background-color: #118ab2;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 0 #0a6c8c;
+            margin-left: 10px;
+        }
+        
+        .game-board {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .level-1-board {
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+        }
+        
+        .level-2-board {
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+        }
+        
+        .level-3-board {
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+        }
+        
+        .game-cell {
+            background-color: white;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 90px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border: 3px solid white;
+            position: relative;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+        
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .game-cell.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 7px;
+        }
+        
+        .card-front {
+            background-color: white;
+        }
+        
+        .card-back {
+            background-color: #8ac6d1;
+            transform: rotateY(180deg);
+            color: white;
+        }
+        
+        .card-back .emoji {
+            font-size: 2rem;
+        }
+        
+        .game-cell:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .game-cell.selected {
+            border-color: #ffd166;
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(255, 209, 102, 0.4);
+        }
+        
+        .game-cell.matched {
+            animation: matchAnimation 0.5s forwards;
+        }
+        
+        @keyframes matchAnimation {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+        
+        .emoji {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+        }
+        
+        .word {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            padding: 0 5px;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background-color: #118ab2;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 4px 0 #0a6c8c;
+        }
+        
+        .btn:hover {
+            background-color: #0d7a9c;
+            transform: translateY(-3px);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 #0a6c8c;
+        }
+        
+        .btn.back {
+            background-color: #8ac6d1;
+            box-shadow: 0 4px 0 #6ba7b2;
+        }
+        
+        .btn.back:hover {
+            background-color: #7ab5c0;
+        }
+        
+        .btn.reset {
+            background-color: #ef476f;
+            box-shadow: 0 4px 0 #d43d63;
+        }
+        
+        .btn.reset:hover {
+            background-color: #e0365f;
+        }
+        
+        .message {
+            height: 40px;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: #073b4c;
+        }
+        
+        .success {
+            color: #06d6a0;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #ef476f;
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ff6b6b;
+            animation: fall linear forwards;
+        }
+        
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+        
+        .victory-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            z-index: 101;
+            display: none;
+        }
+        
+        .victory-title {
+            color: #ff6b6b;
+            font-size: 2rem;
+            margin-bottom: 15px;
+        }
+        
+        .victory-score {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #118ab2;
+        }
+        
+        .victory-time {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #06d6a0;
+        }
+        
+        .time-warning {
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 500px) {
+            .game-cell {
+                height: 70px;
+            }
+            
+            .emoji {
+                font-size: 1.8rem;
+            }
+            
+            .word {
+                font-size: 0.8rem;
+            }
+            
+            .main-title {
+                font-size: 2rem;
+            }
+            
+            .game-title {
+                font-size: 1.5rem;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 主菜单界面 -->
+    <div class="screen active" id="main-menu">
+        <h1 class="main-title">英语消消乐</h1>
+        <p class="subtitle">快乐学英语，轻松记单词！</p>
+        
+        <div class="welcome-emoji">🎮📚✨</div>
+        
+        <p style="margin-bottom: 30px; color: #666;">点击下方按钮开始游戏</p>
+        
+        <button class="btn" id="start-btn">
+            <span>开始游戏</span>
+        </button>
+    </div>
+    
+    <!-- 关卡选择界面 -->
+    <div class="screen" id="level-selection">
+        <h1 class="level-title">选择关卡</h1>
+        
+        <div class="levels-container">
+            <div class="level-card" data-level="1">
+                <div class="level-header">
+                    <div class="level-name">第一关：动物与水果</div>
+                    <div class="level-difficulty">简单</div>
+                </div>
+                <div class="level-description">
+                    匹配动物和水果的图片与单词，共有8组词汇。
+                </div>
+            </div>
+            
+            <div class="level-card" data-level="2">
+                <div class="level-header">
+                    <div class="level-name">第二关：多彩世界</div>
+                    <div class="level-difficulty medium">中等</div>
+                </div>
+                <div class="level-description">
+                    匹配动物、学校用品、家庭成员和动作的图片与单词，共有12组词汇。
+                </div>
+            </div>
+            
+            <div class="level-card" data-level="3">
+                <div class="level-header">
+                    <div class="level-name">第三关：记忆挑战</div>
+                    <div class="level-difficulty hard">困难</div>
+                </div>
+                <div class="level-description">
+                    2分钟时间挑战！记忆卡片位置并完成匹配，共有10组词汇。
+                </div>
+            </div>
+        </div>
+        
+        <button class="btn back" id="back-to-menu-btn">
+            <span>返回主菜单</span>
+        </button>
+    </div>
+    
+    <!-- 游戏界面 -->
+    <div class="screen" id="game-container">
+        <div class="header">
+            <h1 class="game-title">英语消消乐</h1>
+            <div style="display: flex;">
+                <div class="score-container">
+                    得分: <span id="score">0</span>
+                </div>
+                <div class="timer-container" id="timer-container" style="display: none;">
+                    时间: <span id="timer">120</span>秒
+                </div>
+            </div>
+        </div>
+        
+        <div class="message" id="message"></div>
+        
+        <div class="game-board" id="game-board">
+            <!-- 游戏格子将通过JS动态生成 -->
+        </div>
+        
+        <div class="controls">
+            <button class="btn back" id="back-to-levels-btn">
+                <span>返回关卡</span>
+            </button>
+            <button class="btn reset" id="reset-btn">
+                <span>重新开始</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- 庆祝效果 -->
+    <div class="celebration" id="celebration"></div>
+    
+    <!-- 胜利消息 -->
+    <div class="victory-message" id="victory-message">
+        <h2 class="victory-title" id="victory-title">太棒啦！你全对啦～</h2>
+        <p class="victory-score">最终得分: <span id="final-score">0</span></p>
+        <p class="victory-time">剩余时间: <span id="remaining-time">0</span>秒</p>
+        <button class="btn" id="play-again-btn">再来一次</button>
+        <button class="btn back" id="next-level-btn" style="margin-top: 10px; display: none;">下一关卡</button>
+    </div>
+
+    <script>
+        // 游戏数据
+        const level1Data = [
+            { word: "cat", emoji: "🐱", color: "#ff9e6d" },
+            { word: "dog", emoji: "🐶", color: "#8ac6d1" },
+            { word: "bird", emoji: "🐦", color: "#bbd196" },
+            { word: "rabbit", emoji: "🐰", color: "#ffb6b9" },
+            { word: "apple", emoji: "🍎", color: "#ff6b6b" },
+            { word: "banana", emoji: "🍌", color: "#ffd166" },
+            { word: "orange", emoji: "🍊", color: "#ff9e6d" },
+            { word: "grape", emoji: "🍇", color: "#c77dff" }
+        ];
+
+        // 第二关：二年级水平的英语单词
+        const level2Data = [
+            // 动物类
+            { word: "lion", emoji: "🦁", color: "#ff9e6d" },
+            { word: "tiger", emoji: "🐯", color: "#ffd166" },
+            { word: "panda", emoji: "🐼", color: "#8ac6d1" },
+            // 学校用品类
+            { word: "pencil", emoji: "✏️", color: "#bbd196" },
+            { word: "ruler", emoji: "📏", color: "#ffb6b9" },
+            { word: "school", emoji: "🏫", color: "#c77dff" },
+            // 家庭成员类
+            { word: "family", emoji: "👨‍👩‍👧‍👦", color: "#ff6b6b" },
+            { word: "mother", emoji: "👩", color: "#8ac6d1" },
+            { word: "father", emoji: "👨", color: "#06d6a0" },
+            // 动作类
+            { word: "jump", emoji: "🦘", color: "#ff9e6d" },
+            { word: "swim", emoji: "🏊", color: "#118ab2" },
+            { word: "sleep", emoji: "😴", color: "#c77dff" }
+        ];
+
+        // 第三关：记忆挑战 - 使用食物与饮料类词汇
+        const level3Data = [
+            { word: "happy", emoji: "😊", color: "#ffd166" },
+            { word: "angry", emoji: "😠", color: "#ff6b6b" },
+            { word: "sunny", emoji: "☀️", color: "#ff9e6d" },
+            { word: "rainy", emoji: "🌧️", color: "#8ac6d1" },
+            { word: "teacher", emoji: "👩‍🏫", color: "#bbd196" },
+            { word: "doctor", emoji: "👨‍⚕️", color: "#ffb6b9" },
+            { word: "bread", emoji: "🍞", color: "#c77dff" },
+            { word: "milk", emoji: "🥛", color: "#06d6a0" },
+            { word: "water", emoji: "💧", color: "#118ab2" },
+            { word: "winter", emoji: "⛄", color: "#8ac6d1" }
+        ];
+
+        // 游戏状态
+        let currentLevel = 1;
+        let score = 0;
+        let selectedCell = null;
+        let matchedPairs = 0;
+        let totalPairs = 0;
+        let gameStarted = false;
+        let timerInterval = null;
+        let timeLeft = 120;
+        let isLevel3InitialShow = false;
+
+        // DOM元素
+        const mainMenu = document.getElementById('main-menu');
+        const levelSelection = document.getElementById('level-selection');
+        const gameContainer = document.getElementById('game-container');
+        const gameBoard = document.getElementById('game-board');
+        const scoreElement = document.getElementById('score');
+        const messageElement = document.getElementById('message');
+        const timerContainer = document.getElementById('timer-container');
+        const timerElement = document.getElementById('timer');
+        const startBtn = document.getElementById('start-btn');
+        const backToMenuBtn = document.getElementById('back-to-menu-btn');
+        const backToLevelsBtn = document.getElementById('back-to-levels-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const levelCards = document.querySelectorAll('.level-card');
+        const celebrationElement = document.getElementById('celebration');
+        const victoryMessage = document.getElementById('victory-message');
+        const victoryTitle = document.getElementById('victory-title');
+        const finalScoreElement = document.getElementById('final-score');
+        const remainingTimeElement = document.getElementById('remaining-time');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const nextLevelBtn = document.getElementById('next-level-btn');
+
+        // 显示特定界面
+        function showScreen(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            screen.classList.add('active');
+        }
+
+        // 初始化游戏
+        function initGame(level) {
+            currentLevel = level;
+            
+            // 清空游戏板
+            gameBoard.innerHTML = '';
+            gameBoard.className = 'game-board';
+            
+            // 根据关卡设置游戏板样式和总对数
+            if (level === 1) {
+                gameBoard.classList.add('level-1-board');
+                totalPairs = level1Data.length;
+                timerContainer.style.display = 'none';
+            } else if (level === 2) {
+                gameBoard.classList.add('level-2-board');
+                totalPairs = level2Data.length;
+                timerContainer.style.display = 'none';
+            } else {
+                gameBoard.classList.add('level-3-board');
+                totalPairs = level3Data.length;
+                timerContainer.style.display = 'flex';
+                timeLeft = 120;
+                timerElement.textContent = timeLeft;
+                timerElement.classList.remove('time-warning');
+            }
+            
+            // 重置游戏状态
+            score = 0;
+            selectedCell = null;
+            matchedPairs = 0;
+            gameStarted = false;
+            isLevel3InitialShow = false;
+            
+            // 清除之前的计时器
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            // 更新分数显示
+            scoreElement.textContent = score;
+            messageElement.textContent = '点击图片和对应的单词进行匹配！';
+            messageElement.className = 'message';
+            
+            // 获取当前关卡的数据
+            const currentData = level === 1 ? level1Data : (level === 2 ? level2Data : level3Data);
+            
+            // 创建配对数据（每个单词和图片各出现一次）
+            const pairs = [];
+            currentData.forEach(item => {
+                pairs.push({ type: 'image', word: item.word, emoji: item.emoji, color: item.color });
+                pairs.push({ type: 'word', word: item.word, emoji: item.emoji, color: item.color });
+            });
+            
+            // 随机打乱配对数据
+            const shuffledPairs = [...pairs].sort(() => Math.random() - 0.5);
+            
+            // 创建游戏格子
+            shuffledPairs.forEach((item, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'game-cell';
+                cell.dataset.index = index;
+                cell.dataset.word = item.word;
+                cell.dataset.type = item.type;
+                
+                const cardInner = document.createElement('div');
+                cardInner.className = 'card-inner';
+                
+                const cardFront = document.createElement('div');
+                cardFront.className = 'card-front';
+                cardFront.style.backgroundColor = '#8ac6d1';
+                cardFront.innerHTML = '<div class="emoji">❓</div>';
+                
+                const cardBack = document.createElement('div');
+                cardBack.className = 'card-back';
+                
+                if (item.type === 'image') {
+                    const emojiElement = document.createElement('div');
+                    emojiElement.className = 'emoji';
+                    emojiElement.textContent = item.emoji;
+                    cardBack.appendChild(emojiElement);
+                } else {
+                    const wordElement = document.createElement('div');
+                    wordElement.className = 'word';
+                    wordElement.textContent = item.word;
+                    wordElement.style.color = 'white';
+                    cardBack.appendChild(wordElement);
+                }
+                
+                cardInner.appendChild(cardFront);
+                cardInner.appendChild(cardBack);
+                cell.appendChild(cardInner);
+                
+                // 添加点击事件
+                cell.addEventListener('click', handleCellClick);
+                
+                gameBoard.appendChild(cell);
+            });
+            
+            // 如果是第三关，先展示所有卡片3秒
+            if (level === 3) {
+                isLevel3InitialShow = true;
+                const cells = document.querySelectorAll('.game-cell');
+                cells.forEach(cell => {
+                    cell.classList.add('flipped');
+                });
+                
+                setTimeout(() => {
+                    cells.forEach(cell => {
+                        cell.classList.remove('flipped');
+                    });
+                    isLevel3InitialShow = false;
+                    gameStarted = true;
+                    startTimer();
+                }, 3000);
+            } else {
+                gameStarted = true;
+            }
+        }
+
+        // 开始计时器（第三关）
+        function startTimer() {
+            if (currentLevel !== 3) return;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                
+                // 时间警告效果
+                if (timeLeft <= 10) {
+                    timerElement.classList.add('time-warning');
+                }
+                
+                // 时间到
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame(false);
+                }
+            }, 1000);
+        }
+
+        // 停止计时器
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        // 处理格子点击
+        function handleCellClick(event) {
+            if (!gameStarted || isLevel3InitialShow) return;
+            
+            const cell = event.currentTarget;
+            
+            // 如果已经匹配，忽略点击
+            if (cell.classList.contains('matched')) return;
+            
+            // 如果已经选中，取消选中
+            if (selectedCell === cell) {
+                cell.classList.remove('flipped');
+                cell.classList.remove('selected');
+                selectedCell = null;
+                return;
+            }
+            
+            // 翻转卡片
+            cell.classList.add('flipped');
+            
+            // 如果当前选中的是单词，播放发音
+            if (cell.dataset.type === 'word') {
+                speakWord(cell.dataset.word);
+            }
+            
+            // 如果之前没有选中任何格子，选中当前格子
+            if (!selectedCell) {
+                selectedCell = cell;
+                return;
+            }
+            
+            // 如果之前已经选中了一个格子，检查是否匹配
+            const firstType = selectedCell.dataset.type;
+            const secondType = cell.dataset.type;
+            
+            // 只有当一个是图片一个是单词时才进行匹配检查
+            if ((firstType === 'image' && secondType === 'word') || 
+                (firstType === 'word' && secondType === 'image')) {
+                
+                const firstWord = selectedCell.dataset.word;
+                const secondWord = cell.dataset.word;
+                
+                if (firstWord === secondWord) {
+                    // 匹配成功
+                    setTimeout(() => {
+                        selectedCell.classList.add('matched');
+                        cell.classList.add('matched');
+                        
+                        score += 1;
+                        scoreElement.textContent = score;
+                        matchedPairs += 1;
+                        
+                        showMessage(getRandomSuccessMessage(), 'success');
+                        
+                        // 播放成功音效
+                        playSuccessSound();
+                        
+                        // 检查游戏是否结束
+                        if (matchedPairs === totalPairs) {
+                            stopTimer();
+                            setTimeout(() => endGame(true), 500);
+                        }
+                        
+                        selectedCell = null;
+                    }, 500);
+                } else {
+                    // 匹配失败
+                    showMessage('Try again!', 'error');
+                    
+                    setTimeout(() => {
+                        selectedCell.classList.remove('flipped');
+                        cell.classList.remove('flipped');
+                        messageElement.textContent = '';
+                        selectedCell = null;
+                    }, 1000);
+                }
+            } else {
+                // 如果选中的两个格子类型相同，取消第一个选中，选中当前格子
+                setTimeout(() => {
+                    selectedCell.classList.remove('flipped');
+                    cell.classList.add('flipped');
+                    selectedCell = cell;
+                }, 300);
+            }
+        }
+
+        // 获取随机成功消息
+        function getRandomSuccessMessage() {
+            const messages = ['Great!', 'Perfect!', 'Awesome!', 'Excellent!', 'Well done!', 'Good job!'];
+            return messages[Math.floor(Math.random() * messages.length)];
+        }
+
+        // 显示消息
+        function showMessage(text, type) {
+            messageElement.textContent = text;
+            messageElement.className = `message ${type}`;
+        }
+
+        // 播放成功音效
+        function playSuccessSound() {
+            // 使用Web Audio API创建简单音效
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                console.log('音频播放失败:', e);
+            }
+        }
+
+        // 单词发音
+        function speakWord(word) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.8;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // 结束游戏
+        function endGame(isSuccess) {
+            finalScoreElement.textContent = score;
+            remainingTimeElement.textContent = timeLeft;
+            
+            if (isSuccess) {
+                victoryTitle.textContent = '太棒啦！你全对啦～';
+                createConfetti();
+            } else {
+                victoryTitle.textContent = '时间到！挑战失败';
+            }
+            
+            victoryMessage.style.display = 'block';
+            
+            // 如果不是第三关，显示下一关按钮
+            if (currentLevel === 1) {
+                nextLevelBtn.style.display = 'block';
+            } else if (currentLevel === 2) {
+                nextLevelBtn.style.display = 'block';
+            } else {
+                nextLevelBtn.style.display = 'none';
+            }
+        }
+
+        // 创建庆祝彩花
+        function createConfetti() {
+            celebrationElement.style.display = 'block';
+            const colors = ['#ff6b6b', '#ffd166', '#06d6a0', '#118ab2', '#c77dff'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                celebrationElement.appendChild(confetti);
+            }
+        }
+
+        // 事件监听
+        startBtn.addEventListener('click', () => {
+            showScreen(levelSelection);
+        });
+        
+        backToMenuBtn.addEventListener('click', () => {
+            showScreen(mainMenu);
+        });
+        
+        backToLevelsBtn.addEventListener('click', () => {
+            showScreen(levelSelection);
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            initGame(currentLevel);
+            victoryMessage.style.display = 'none';
+            celebrationElement.style.display = 'none';
+            celebrationElement.innerHTML = '';
+        });
+        
+        levelCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const level = parseInt(card.dataset.level);
+                initGame(level);
+                showScreen(gameContainer);
+            });
+        });
+        
+        playAgainBtn.addEventListener('click', () => {
+            initGame(currentLevel);
+            victoryMessage.style.display = 'none';
+            celebrationElement.style.display = 'none';
+            celebrationElement.innerHTML = '';
+        });
+        
+        nextLevelBtn.addEventListener('click', () => {
+            const nextLevel = currentLevel + 1;
+            if (nextLevel <= 3) {
+                initGame(nextLevel);
+                victoryMessage.style.display = 'none';
+                celebrationElement.style.display = 'none';
+                celebrationElement.innerHTML = '';
+                showScreen(gameContainer);
+            } else {
+                showScreen(levelSelection);
+            }
+        });
+
+        // 初始化显示主菜单
+        showScreen(mainMenu);
+    </script>
+</body>
+</html>
